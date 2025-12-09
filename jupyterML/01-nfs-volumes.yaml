@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jupyter-model-data-nfs-pv
+spec:
+  capacity:
+    storage: 256Gi # Adjust size for all models and caches
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    path: /export/nfs # The exported path on your NFS server
+    server: nfs.guardops.ai # The IP of your NFS server
+    readOnly: false
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-data-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: "" # Required for static binding to the PV above
+  resources:
+    requests:
+      storage: 256Gi # Must be <= the PV's capacity
+  volumeName: jupyter-model-data-nfs-pv

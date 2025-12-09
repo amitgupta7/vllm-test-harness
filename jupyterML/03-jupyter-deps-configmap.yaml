@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jupyter-deps-script
+  namespace: jupyter-ml-env
+data:
+  pyproject.toml: |
+    [project]
+    name = "jupyter-python-local-venv"
+    version = "0.0.1"
+    requires-python = ">= 3.5"
+    dependencies = [
+        "ipykernel==6.31.0",
+        "notebook==7.5.0"
+        ]

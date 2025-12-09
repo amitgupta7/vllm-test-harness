@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Define the namespace for all resources. Kustomize will also create the namespace.
+namespace: jupyter-ml-env
+
+
+# List all the resource files you want to include in the deployment.
+resources:
+  - 00-namespace.yaml
+  - 01-nfs-volumes.yaml
+  - 02-jupyter.yaml
+  - 03-jupyter-deps-configmap.yaml
+  
+images:
+
+  - name: vllm/vllm-openai-0.11
+    newName: artifactory.guardops.ai/library/vllm-openai-patched
+    newTag: v0.11.0-patch1

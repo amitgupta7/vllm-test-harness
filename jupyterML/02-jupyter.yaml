@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-deployment-gpt-oss
+  labels:
+    app: jupyter-ml-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jupyter-ml-app
+  template:
+    metadata:
+      labels:
+        app: jupyter-ml-app
+    spec:
+      runtimeClassName: nvidia
+      nodeSelector:
+        kubernetes.io/hostname: nvm-1002
+      volumes:
+      - name: dshm
+        hostPath:
+          path: /dev/shm
+      - name: pip-packages-host
+        hostPath:
+          path: /workspace/jupyter-ml
+          type: DirectoryOrCreate
+      - name: deps-script-configmap
+        configMap:
+          name: jupyter-deps-script
+          items:
+          - key: pyproject.toml
+            path: pyproject.toml
+      - name: nfs
+        persistentVolumeClaim:
+          claimName: model-data-pvc
+      containers:
+      - name: vllm
+        image: vllm/vllm-openai-0.11:latest
+        command: ["/bin/sh", "-c"]
+        args: [
+        # "sleep infinity"
+          "
+          python3 -m venv $JUPYTER_WORKSPACE/venv \
+          && . $JUPYTER_WORKSPACE/venv/bin/activate \
+          && cp -r /opt/deps $JUPYTER_WORKSPACE/ \
+          && pip install -e $JUPYTER_WORKSPACE/deps
+          && python -m notebook $JUPYTER_CODE_ROOT \
+          --ip=0.0.0.0 \
+          --port=8000 \
+          --no-browser \
+          --allow-root
+          "
+        ]
+        env:
+        - name: JUPYTER_WORKSPACE
+          value: "/workspace/jupyter-ml"
+        - name: JUPYTER_CODE_ROOT
+          value: "/root/code"
+        ports:
+        - containerPort: 8000
+        volumeMounts:
+        - name: dshm
+          mountPath: /dev/shm
+        - name: nfs
+          mountPath: /root/.cache/huggingface
+          subPath: huggingface/hf-cache
+          readOnly: false
+        - name: nfs
+          mountPath: /root/code
+          subPath: code
+          readOnly: false
+        - name: pip-packages-host
+          mountPath: $JUPYTER_WORKSPACE
+        - name: deps-script-configmap
+          mountPath: /opt/deps
+          readOnly: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jupyter-ml-svc
+spec:
+  type: NodePort
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000
+    nodePort: 32440
+  selector:
+    app: jupyter-ml-app
