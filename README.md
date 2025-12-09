@@ -131,6 +131,42 @@ This command executes `kubectl delete -k jupyterML`.
 *   **Dependencies**: Base dependencies (ipykernel==6.31.0, notebook==7.5.0) are installed from the `ConfigMap` into a Python virtual environment located in `/workspace/jupyter-ml/venv`.
 *   **vLLM Initialization**: The container initializes vLLM within the Jupyter environment. Specific model loading or vLLM parameters would typically be handled within the Jupyter notebooks/scripts.
 
----
+## How to Use with Local Development
 
+![alt text](image.png)
+
+This section describes how to set up a remote Jupyter kernel in Visual Studio Code (VS Code). This allows you to develop Python machine learning notebooks on your local machine while leveraging the computational resources (GPUs, installed libraries) of the remote Jupyter server running in the Kubernetes cluster.
+
+**Prerequisites:**
+1.  Ensure the Jupyter-ML environment is deployed and running (see `How to Run` section above).
+2.  **Access to the Jupyter Server:**
+    *   Option A (Preferred for local setup): Set up `kubectl port-forward` as described in the "Accessing Jupyter Notebook" section. This makes the Jupyter service accessible at `http://localhost:8000`.
+    *   Option B: If using NodePort, ensure your local machine can reach the NodePort `32440` on one of your Kubernetes nodes.
+3.  **VS Code with Jupyter Extension:** Ensure you have VS Code installed and the official "Jupyter" extension by Microsoft installed.
+4.  **Python Extension (Optional but Recommended):** The "Python" extension by Microsoft is also helpful for general Python development.
+
+**Setup Steps:**
+
+1.  **Obtain the Jupyter Server Token:**
+    *   If using `kubectl port-forward`, open `http://localhost:8000` in your web browser.
+    *   If using NodePort, open `http://<NODE_IP>:32440` in your browser.
+    *   You will see the Jupyter interface. Copy the "token" from the URL (e.g., `.../?token=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`).
+
+2.  **Add a Remote Jupyter Server Connection in VS Code:**
+    *   Open the Command Palette in VS Code (`Ctrl+Shift+P` or `Cmd+Shift+P`).
+    *   Type "Jupyter: Specify the Jupyter server connection" and select it.
+    *   Choose "Add new Jupyter server".
+    *   Select "Existing Jupyter server".
+    *   In the input prompt that appears, enter the full URL to your Jupyter server, **including the token**. Use the same URL you used in step 1 (e.g., `http://localhost:8000/?token=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`).
+    *   VS Code will attempt to connect. If successful, a "Jupyter Server" tab will appear in the explorer view on the left, showing files from your remote Jupyter environment (e.g., `/root/code`).
+
+3.  **Select the Remote Kernel for Your Notebook:**
+    *   Create a new Jupyter Notebook in VS Code (`File > New File > Jupyter Notebook`) or open an existing one.
+    *   In the Jupyter Notebook toolbar in VS Code (top right of the notebook interface), you should see a dropdown for selecting a kernel.
+    *   Click the kernel dropdown. It should list available kernels, including those from your newly connected remote Jupyter server (e.g., a Python 3 kernel from the `/root/code` directory on the remote).
+    *   Select the desired remote kernel from the list. The notebook's kernel indicator (e.g., `Python 3`) should update to reflect the selected remote kernel.
+
+**You're now set up!** You can write and edit cells in your notebook on your local VS Code, but when you run cells (`Cell > Run Cells`, `Shift+Enter`, or the "Run Cell" button), the code will be executed by the Python kernel on the remote Jupyter server. This means you have access to all the Python libraries, GPUs, and resources configured in your Kubernetes pod. Outputs, plots, etc., will be displayed in VS Code as if they were running locally, but the computation happens on the server.
+
+---
 For more detailed information on individual components, refer to the respective YAML files in the `jupyterML/` directory.
