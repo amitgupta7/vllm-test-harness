@@ -39,22 +39,19 @@ spec:
         image: vllm/vllm-openai-0.11:latest
         command: ["/bin/sh", "-c"]
         args: [
-        # "sleep infinity"
+          # "sleep infinity"
           "
-          python3 -m venv $JUPYTER_WORKSPACE/venv \
-          && . $JUPYTER_WORKSPACE/venv/bin/activate \
-          && cp -r /opt/deps $JUPYTER_WORKSPACE/ \
-          && pip install -e $JUPYTER_WORKSPACE/deps
-          && python -m notebook $JUPYTER_CODE_ROOT \
+          cp /opt/deps/pyproject.toml . \
+          &&  pip install -e . \
+          && python3 -m notebook $JUPYTER_CODE_ROOT \
           --ip=0.0.0.0 \
           --port=8000 \
           --no-browser \
-          --allow-root
+          --allow-root \
+          --NotebookApp.token='' \
           "
         ]
         env:
-        - name: JUPYTER_WORKSPACE
-          value: "/workspace/jupyter-ml"
         - name: JUPYTER_CODE_ROOT
           value: "/root/code"
         ports:
